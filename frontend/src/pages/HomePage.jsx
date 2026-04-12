@@ -1,145 +1,137 @@
-import {
-  CalendarClock,
-  CreditCard,
-  ShieldCheck,
-  Sparkles,
-  TicketCheck,
-} from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { SearchForm } from "../components/trains/SearchForm.jsx";
-import { api } from "../lib/api.js";
-
-const featureCards = [
-  {
-    icon: Sparkles,
-    title: "Modern search flow",
-    description: "Fast route lookup with elegant filters, pricing cards, and real seat maps.",
-  },
-  {
-    icon: TicketCheck,
-    title: "Real booking pipeline",
-    description: "JWT auth, protected booking APIs, booking history, email confirmation, and PNR creation.",
-  },
-  {
-    icon: CreditCard,
-    title: "Payment-ready checkout",
-    description: "Dummy payments out of the box with optional Razorpay test mode support.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Admin control center",
-    description: "Manage train inventory, update routes, and keep schedules current from one place.",
-  },
-];
-
-const popularRoutes = [
-  ["Mumbai Central", "New Delhi"],
-  ["New Delhi", "Varanasi Jn"],
-  ["Howrah Jn", "Mumbai CSMT"],
-  ["Chennai Egmore", "Tirunelveli"],
-];
-
-const getSuggestedDate = () => {
-  const date = new Date();
-  date.setDate(date.getDate() + 2);
-  return date.toISOString().slice(0, 10);
-};
+import { Search, Train, Shield, Clock, CreditCard, ChevronRight } from "lucide-react";
 
 export const HomePage = () => {
   const navigate = useNavigate();
-  const [stations, setStations] = useState([]);
+  const [searchData, setSearchData] = useState({
+    from: "",
+    to: "",
+    date: new Date().toISOString().split('T')[0]
+  });
 
-  useEffect(() => {
-    const loadStations = async () => {
-      try {
-        const response = await api.get("/trains/stations");
-        setStations(response.data.data.stations);
-      } catch {
-        setStations([]);
-      }
-    };
-
-    loadStations();
-  }, []);
-
-  const handleSearch = ({ source, destination, date }) => {
-    const params = new URLSearchParams({ source, destination, date });
-    navigate(`/trains?${params.toString()}`);
+  const handleSearch = (e) => {
+    e.preventDefault();
+    navigate(`/trains?from=${searchData.from}&to=${searchData.to}&date=${searchData.date}`);
   };
 
-  return (
-    <div className="space-y-10">
-      <section className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="animate-fade-up rounded-[36px] bg-brand-navy px-6 py-8 text-white shadow-soft sm:px-8 sm:py-10">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white/90">
-            <CalendarClock className="h-4 w-4" />
-            Faster train booking for every route
-          </div>
-          <h1 className="mt-6 max-w-3xl font-display text-4xl leading-tight sm:text-5xl lg:text-6xl">
-            Book railway tickets with seat-level visibility and a smoother IRCTC-style flow.
-          </h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">
-            Search by route and date, compare classes instantly, select seats visually, and
-            manage bookings from one modern dashboard.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            {popularRoutes.map(([source, destination]) => (
-              <button
-                key={`${source}-${destination}`}
-                type="button"
-                onClick={() =>
-                  handleSearch({
-                    source,
-                    destination,
-                    date: getSuggestedDate(),
-                  })
-                }
-                className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
-              >
-                {source} to {destination}
-              </button>
-            ))}
-          </div>
-        </div>
+  const features = [
+    { icon: Shield, title: "Secure Booking", desc: "100% secure payment gateway" },
+    { icon: Clock, title: "Real-time Updates", desc: "Live train status & PNR" },
+    { icon: CreditCard, title: "Easy Cancellation", desc: "Hassle-free refunds" },
+    { icon: Train, title: "Premium Trains", desc: "Rajdhani, Shatabdi & more" }
+  ];
 
-        <div className="glass-card flex flex-col justify-between gap-6 p-6 sm:p-7">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-blue">
-              Search Tickets
+  const popularRoutes = [
+    { from: "Mumbai", to: "Delhi", train: "Rajdhani Express", price: "₹2,100" },
+    { from: "Delhi", to: "Bhopal", train: "Shatabdi Express", price: "₹1,500" },
+    { from: "Delhi", to: "Howrah", train: "Howrah Rajdhani", price: "₹2,400" },
+    { from: "Bangalore", to: "Delhi", train: "Karnataka Exp", price: "₹1,800" }
+  ];
+
+  return (
+    <div className="space-y-12">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white shadow-2xl">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1545987796-200677ee1011?w=1200')] bg-cover bg-center opacity-20" />
+        <div className="relative z-10 px-8 py-16 md:py-24">
+          <div className="mx-auto max-w-4xl text-center">
+            <h1 className="mb-6 text-4xl font-bold leading-tight md:text-6xl">
+              Book Your Train Journey
+              <span className="block text-blue-300">Across India</span>
+            </h1>
+            <p className="mb-8 text-lg text-blue-100 md:text-xl">
+              Experience comfortable travel with premium trains, real-time availability, and instant booking confirmation
             </p>
-            <h2 className="mt-2 font-display text-3xl text-brand-ink">Plan your next journey</h2>
+            
+            {/* Search Form */}
+            <form onSubmit={handleSearch} className="rounded-2xl bg-white/10 backdrop-blur-lg p-6 shadow-xl">
+              <div className="grid gap-4 md:grid-cols-4">
+                <div className="relative">
+                  <label className="mb-1 block text-sm font-medium text-blue-100">From</label>
+                  <input
+                    type="text"
+                    placeholder="Mumbai Central"
+                    className="w-full rounded-xl border-0 bg-white/20 px-4 py-3 text-white placeholder-blue-200 focus:bg-white/30 focus:ring-2 focus:ring-blue-400"
+                    value={searchData.from}
+                    onChange={(e) => setSearchData({...searchData, from: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="relative">
+                  <label className="mb-1 block text-sm font-medium text-blue-100">To</label>
+                  <input
+                    type="text"
+                    placeholder="New Delhi"
+                    className="w-full rounded-xl border-0 bg-white/20 px-4 py-3 text-white placeholder-blue-200 focus:bg-white/30 focus:ring-2 focus:ring-blue-400"
+                    value={searchData.to}
+                    onChange={(e) => setSearchData({...searchData, to: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="relative">
+                  <label className="mb-1 block text-sm font-medium text-blue-100">Date</label>
+                  <input
+                    type="date"
+                    className="w-full rounded-xl border-0 bg-white/20 px-4 py-3 text-white focus:bg-white/30 focus:ring-2 focus:ring-blue-400"
+                    value={searchData.date}
+                    onChange={(e) => setSearchData({...searchData, date: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    type="submit"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-orange-600 hover:shadow-xl"
+                  >
+                    <Search className="h-5 w-5" />
+                    Search Trains
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
-          <SearchForm
-            compact
-            stations={stations}
-            initialValues={{
-              source: "Mumbai Central",
-              destination: "New Delhi",
-              date: getSuggestedDate(),
-            }}
-            onSearch={handleSearch}
-          />
         </div>
       </section>
 
-      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        {featureCards.map((feature, index) => {
-          const Icon = feature.icon;
-          return (
-            <article
-              key={feature.title}
-              className="glass-card animate-fade-up p-6"
-              style={{ animationDelay: `${index * 90}ms` }}
+      {/* Features */}
+      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {features.map((feature, idx) => (
+          <div key={idx} className="group rounded-2xl bg-white p-6 shadow-md transition hover:-translate-y-1 hover:shadow-xl">
+            <div className="mb-4 inline-flex rounded-xl bg-blue-100 p-3 text-blue-600 group-hover:bg-blue-600 group-hover:text-white">
+              <feature.icon className="h-6 w-6" />
+            </div>
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">{feature.title}</h3>
+            <p className="text-gray-600">{feature.desc}</p>
+          </div>
+        ))}
+      </section>
+
+      {/* Popular Routes */}
+      <section>
+        <h2 className="mb-6 text-2xl font-bold text-gray-900">Popular Routes</h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {popularRoutes.map((route, idx) => (
+            <div
+              key={idx}
+              onClick={() => navigate(`/trains?from=${route.from}&to=${route.to}`)}
+              className="cursor-pointer rounded-2xl bg-white p-6 shadow-md transition hover:shadow-xl"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-mist text-brand-blue">
-                <Icon className="h-6 w-6" />
+              <div className="mb-3 flex items-center justify-between">
+                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
+                  {route.train}
+                </span>
               </div>
-              <h3 className="mt-5 text-xl font-bold text-brand-ink">{feature.title}</h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{feature.description}</p>
-            </article>
-          );
-        })}
+              <div className="mb-2 flex items-center gap-2 text-lg font-semibold">
+                <span>{route.from}</span>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <span>{route.to}</span>
+              </div>
+              <p className="text-2xl font-bold text-blue-600">{route.price}</p>
+              <p className="mt-2 text-sm text-gray-500">Starting price</p>
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );

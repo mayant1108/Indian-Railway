@@ -15,5 +15,5 @@ export const mockUsers = [
   }
 ];
 
-export const sampleTrains = [/* from data/trains.js - copy if needed */];
+// Sample data moved to data/trains.js
 

@@ -1,172 +1,131 @@
-import { LockKeyhole, Mail, Phone, User2 } from "lucide-react";
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAlerts } from "../context/AlertContext.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
-import { getErrorMessage } from "../lib/api.js";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { Train, Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 
-const initialForm = {
-  name: "",
-  email: "",
-  password: "",
-  phone: "",
-};
+const API_URL = "http://localhost:5000/api";
 
 export const AuthPage = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { addAlert } = useAlerts();
-  const { login, register } = useAuth();
-  const [mode, setMode] = useState("login");
-  const [submitting, setSubmitting] = useState(false);
-  const [formState, setFormState] = useState(initialForm);
+  const [isLogin, setIsLogin] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: ""
+  });
 
-  const redirect = searchParams.get("redirect") || "/";
-
-  const updateField = (field, value) => {
-    setFormState((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setSubmitting(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
     try {
-      if (mode === "login") {
-        await login({
-          email: formState.email,
-          password: formState.password,
-        });
-      } else {
-        await register(formState);
-      }
-
-      addAlert({
-        type: "success",
-        title: mode === "login" ? "Welcome back" : "Account created",
-        message: "You're signed in and ready to book.",
-      });
-      navigate(redirect);
+      const endpoint = isLogin ? "/auth/login" : "/auth/register";
+      const response = await axios.post(`${API_URL}${endpoint}`, formData);
+      
+      localStorage.setItem("token", response.data.data.token);
+      localStorage.setItem("user", JSON.stringify(response.data.data.user));
+      
+      navigate("/");
     } catch (error) {
-      addAlert({
-        type: "error",
-        title: "Authentication failed",
-        message: getErrorMessage(error),
-      });
+      alert(error.response?.data?.message || "Authentication failed");
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="grid gap-8 xl:grid-cols-[0.95fr_1.05fr]">
-      <section className="animate-fade-up rounded-[36px] bg-brand-navy p-8 text-white shadow-soft sm:p-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-white/70">
-          Passenger Access
-        </p>
-        <h1 className="mt-3 font-display text-4xl leading-tight sm:text-5xl">
-          Secure login for bookings, payments, and trip history.
-        </h1>
-        <div className="mt-8 space-y-4 text-sm leading-6 text-white/75">
-          <p>JWT-powered authentication for protected booking APIs and admin-only train management.</p>
-          <p>Use the seeded demo accounts after running the backend seed script.</p>
-          <div className="rounded-[28px] border border-white/15 bg-white/10 p-5">
-            <p className="font-semibold text-white">Seeded accounts</p>
-            <p className="mt-2">Admin: `admin@railwayhub.com` / `Admin@123`</p>
-            <p>User: `user@railwayhub.com` / `User@123`</p>
+    <div className="mx-auto max-w-md">
+      <div className="rounded-2xl bg-white p-8 shadow-xl">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+            <Train className="h-8 w-8 text-blue-600" />
           </div>
-        </div>
-      </section>
-
-      <section className="glass-card p-6 sm:p-8">
-        <div className="flex gap-3 rounded-full bg-brand-mist p-1">
-          <button
-            type="button"
-            onClick={() => setMode("login")}
-            className={`flex-1 rounded-full px-4 py-3 text-sm font-semibold transition ${
-              mode === "login" ? "bg-white text-brand-navy shadow" : "text-slate-600"
-            }`}
-          >
-            Login
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("register")}
-            className={`flex-1 rounded-full px-4 py-3 text-sm font-semibold transition ${
-              mode === "register" ? "bg-white text-brand-navy shadow" : "text-slate-600"
-            }`}
-          >
-            Signup
-          </button>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isLogin ? "Welcome Back" : "Create Account"}
+          </h1>
+          <p className="mt-2 text-gray-600">
+            {isLogin ? "Sign in to book your journey" : "Start your railway booking experience"}
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          {mode === "register" ? (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
             <div>
-              <label className="field-label">Full name</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Full Name</label>
               <div className="relative">
-                <User2 className="pointer-events-none absolute left-4 top-3.5 h-5 w-5 text-brand-blue" />
+                <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <input
-                  className="field-input pl-12"
-                  value={formState.name}
-                  onChange={(event) => updateField("name", event.target.value)}
-                  placeholder="Priya Sharma"
+                  type="text"
+                  required
+                  className="w-full rounded-xl border border-gray-300 pl-10 pr-4 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  placeholder="John Doe"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
                 />
               </div>
             </div>
-          ) : null}
+          )}
 
           <div>
-            <label className="field-label">Email address</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
             <div className="relative">
-              <Mail className="pointer-events-none absolute left-4 top-3.5 h-5 w-5 text-brand-blue" />
+              <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
               <input
                 type="email"
-                className="field-input pl-12"
-                value={formState.email}
-                onChange={(event) => updateField("email", event.target.value)}
+                required
+                className="w-full rounded-xl border border-gray-300 pl-10 pr-4 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                 placeholder="you@example.com"
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
               />
             </div>
           </div>
 
           <div>
-            <label className="field-label">Password</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Password</label>
             <div className="relative">
-              <LockKeyhole className="pointer-events-none absolute left-4 top-3.5 h-5 w-5 text-brand-blue" />
+              <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
               <input
-                type="password"
-                className="field-input pl-12"
-                value={formState.password}
-                onChange={(event) => updateField("password", event.target.value)}
-                placeholder="Enter your password"
+                type={showPassword ? "text" : "password"}
+                required
+                className="w-full rounded-xl border border-gray-300 pl-10 pr-12 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={(e) => setFormData({...formData, password: e.target.value})}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
             </div>
           </div>
 
-          {mode === "register" ? (
-            <div>
-              <label className="field-label">Phone number</label>
-              <div className="relative">
-                <Phone className="pointer-events-none absolute left-4 top-3.5 h-5 w-5 text-brand-blue" />
-                <input
-                  className="field-input pl-12"
-                  value={formState.phone}
-                  onChange={(event) => updateField("phone", event.target.value)}
-                  placeholder="9876543210"
-                />
-              </div>
-            </div>
-          ) : null}
-
-          <button type="submit" className="primary-button w-full" disabled={submitting}>
-            {submitting ? "Please wait..." : mode === "login" ? "Login to continue" : "Create account"}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-xl bg-blue-600 py-3 font-semibold text-white shadow-lg transition hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
           </button>
         </form>
-      </section>
+
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            {isLogin ? "Don't have an account?" : "Already have an account?"}
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              className="ml-1 font-semibold text-blue-600 hover:text-blue-700"
+            >
+              {isLogin ? "Sign Up" : "Sign In"}
+            </button>
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

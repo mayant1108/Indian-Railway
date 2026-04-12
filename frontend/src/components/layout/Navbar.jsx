@@ -40,13 +40,15 @@ export const Navbar = () => {
     <header className="sticky top-0 z-40 border-b border-white/60 bg-white/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-navy text-white shadow-soft">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-lg">
             <TrainFront className="h-6 w-6" />
+
           </div>
           <div>
-            <p className="font-display text-xl text-brand-ink">RailwayHub</p>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-blue">
+            <p className="font-display text-xl font-bold text-slate-900">RailwayHub</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-teal-600">
               Smart Ticketing
+
             </p>
           </div>
         </Link>
@@ -62,10 +64,10 @@ export const Navbar = () => {
         <div className="hidden items-center gap-3 lg:flex">
           {isAuthenticated ? (
             <>
-              <div className="flex items-center gap-3 rounded-full bg-brand-mist px-4 py-2">
-                <UserCircle2 className="h-5 w-5 text-brand-blue" />
+              <div className="flex items-center gap-3 rounded-full bg-teal-50 px-4 py-2">
+                <UserCircle2 className="h-5 w-5 text-teal-600" />
                 <div>
-                  <p className="text-sm font-semibold text-brand-ink">{user?.name}</p>
+                  <p className="text-sm font-semibold text-slate-900">{user?.name}</p>
                   <p className="text-xs text-slate-500">{user?.role}</p>
                 </div>
               </div>
@@ -74,10 +76,11 @@ export const Navbar = () => {
               </button>
             </>
           ) : (
-            <Link to="/auth" className="primary-button gap-2">
-              <Ticket className="h-4 w-4" />
-              Login / Signup
-            </Link>
+              <Link to="/auth" className="primary-button gap-2">
+                <Ticket className="h-4 w-4" />
+                Login / Signup
+              </Link>
+
           )}
         </div>
 

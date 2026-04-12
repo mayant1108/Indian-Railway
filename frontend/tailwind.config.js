@@ -4,17 +4,29 @@ export default {
   theme: {
     extend: {
       colors: {
+        slate: {
+          50: "#f8fafc",
+          100: "#f1f5f9",
+          500: "#64748b",
+          700: "#334155",
+          900: "#0f172a",
+        },
+        teal: {
+          50: "#f0fdfa",
+          500: "#14b8a6",
+          600: "#0d9488",
+          700: "#0f766e",
+        },
         brand: {
-          navy: "#0f4c81",
-          blue: "#1d74bd",
-          mist: "#e7f3ff",
-          gold: "#f59e0b",
-          ink: "#10213a",
-          cream: "#fff9f1",
+          ink: "#0f172a",
+          blue: "#1d4ed8",
+          navy: "#1e40af",
+          mist: "#f8fafc",
         },
       },
       boxShadow: {
-        soft: "0 20px 50px -24px rgba(15, 76, 129, 0.35)",
+        soft: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+        xl: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 0px 10px -5px rgb(0 0 0 / 0.1)",
       },
       backgroundImage: {
         "hero-glow":

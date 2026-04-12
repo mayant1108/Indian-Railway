@@ -32,8 +32,7 @@ const Layout = () => {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-brand-cream text-brand-ink">
-      <div className="pointer-events-none absolute inset-0 bg-hero-glow" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_top,rgba(29,116,189,0.18),transparent_55%)]" />
       <Navbar />
       <AlertStack />

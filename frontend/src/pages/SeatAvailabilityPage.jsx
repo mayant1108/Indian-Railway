@@ -1,288 +1,196 @@
-import { ArrowRight, ChevronLeft, Minus, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { SeatSelection } from "../components/booking/SeatSelection.jsx";
-import { EmptyState } from "../components/ui/EmptyState.jsx";
-import { Loader } from "../components/ui/Loader.jsx";
-import { useAlerts } from "../context/AlertContext.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
-import { api, getErrorMessage } from "../lib/api.js";
-import { formatCurrency, formatDateLong, formatDuration } from "../lib/formatters.js";
+import { useState, useEffect } from "react";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { ArrowLeft, Train, Users, Check, X, Armchair } from "lucide-react";
 
-const clampPassengerCount = (value) => Math.max(1, Math.min(6, value));
+const API_URL = "http://localhost:5000/api";
 
 export const SeatAvailabilityPage = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { addAlert } = useAlerts();
-  const { isAuthenticated } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [details, setDetails] = useState(null);
+  const [train, setTrain] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [selectedSeats, setSelectedSeats] = useState([]);
-
-  const source = searchParams.get("source") || "";
-  const destination = searchParams.get("destination") || "";
-  const date = searchParams.get("date") || "";
-  const classCode = searchParams.get("classCode") || "3A";
-  const passengerCount = clampPassengerCount(Number(searchParams.get("passengers") || 1));
+  const travelClass = searchParams.get("class") || "sleeper";
+  const date = searchParams.get("date");
 
   useEffect(() => {
-    if (!id || !source || !destination || !date) {
-      return;
-    }
+    fetchTrainDetails();
+  }, [id]);
 
-    const loadTrainDetails = async () => {
+  const fetchTrainDetails = async () => {
+    try {
       setLoading(true);
-
-      try {
-        const response = await api.get(`/trains/${id}`, {
-          params: {
-            source,
-            destination,
-            journeyDate: date,
-            classCode,
-          },
-        });
-
-        setDetails(response.data.data);
-        setSelectedSeats([]);
-      } catch (error) {
-        setDetails(null);
-        addAlert({
-          type: "error",
-          title: "Unable to load seats",
-          message: getErrorMessage(error),
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadTrainDetails();
-  }, [id, source, destination, date, classCode]);
-
-  const updateQuery = (updates) => {
-    const nextParams = new URLSearchParams(searchParams);
-
-    Object.entries(updates).forEach(([key, value]) => {
-      nextParams.set(key, String(value));
-    });
-
-    setSearchParams(nextParams);
-  };
-
-  const handleSeatToggle = (seat) => {
-    setSelectedSeats((currentSeats) => {
-      if (currentSeats.includes(seat.seatNumber)) {
-        return currentSeats.filter((currentSeat) => currentSeat !== seat.seatNumber);
-      }
-
-      if (currentSeats.length >= passengerCount) {
-        addAlert({
-          type: "warning",
-          title: "Seat limit reached",
-          message: `You can select up to ${passengerCount} seat${passengerCount > 1 ? "s" : ""}.`,
-        });
-        return currentSeats;
-      }
-
-      return [...currentSeats, seat.seatNumber];
-    });
-  };
-
-  const handleContinue = () => {
-    if (selectedSeats.length !== passengerCount) {
-      addAlert({
-        type: "warning",
-        title: "Complete seat selection",
-        message: `Please choose ${passengerCount} seat${passengerCount > 1 ? "s" : ""} before continuing.`,
-      });
-      return;
+      const response = await axios.get(`${API_URL}/trains/${id}`);
+      setTrain(response.data.data);
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setLoading(false);
     }
-
-    const params = new URLSearchParams({
-      source,
-      destination,
-      date,
-      classCode,
-      passengers: String(passengerCount),
-      seats: selectedSeats.join(","),
-    });
-    const target = `/booking/${id}?${params.toString()}`;
-
-    if (!isAuthenticated) {
-      navigate(`/auth?redirect=${encodeURIComponent(target)}`);
-      return;
-    }
-
-    navigate(target);
   };
 
-  if (!source || !destination || !date) {
-    return (
-      <EmptyState
-        title="Search details are missing"
-        description="Return to the train search page and choose a route before checking seat availability."
-        action={
-          <Link to="/" className="primary-button">
-            Search routes
-          </Link>
-        }
-      />
-    );
-  }
+  const toggleSeat = (coach, seatNumber) => {
+    const seatId = `${coach}-${seatNumber}`;
+    if (selectedSeats.find(s => s.id === seatId)) {
+      setSelectedSeats(selectedSeats.filter(s => s.id !== seatId));
+    } else if (selectedSeats.length < 6) {
+      setSelectedSeats([...selectedSeats, { id: seatId, coach, seatNumber }]);
+    }
+  };
 
-  if (loading) {
-    return (
-      <div className="glass-card py-20">
-        <Loader label="Loading coach layout and availability" size="lg" />
-      </div>
-    );
-  }
+  const handleBook = () => {
+    navigate(`/booking/${id}?class=${travelClass}&seats=${selectedSeats.length}&date=${date}`);
+  };
 
-  if (!details) {
-    return (
-      <EmptyState
-        title="We couldn't load this train"
-        description="The route may be unavailable for the selected date, or the train may have been removed."
-        action={
-          <Link
-            to={`/trains?${new URLSearchParams({ source, destination, date }).toString()}`}
-            className="secondary-button"
-          >
-            Back to train list
-          </Link>
-        }
-      />
+  const getSeatLayout = () => {
+    // Generate mock seat layout based on class
+    const rows = travelClass === 'sleeper' ? 8 : 6;
+    const seatsPerRow = travelClass === 'sleeper' ? 8 : 4;
+    
+    return Array.from({ length: rows }, (_, row) => 
+      Array.from({ length: seatsPerRow }, (_, seat) => ({
+        number: `${row + 1}${String.fromCharCode(65 + seat)}`,
+        available: Math.random() > 0.3,
+        coach: travelClass === 'sleeper' ? 'S1' : travelClass === 'ac3Tier' ? 'B1' : 'A1'
+      }))
     );
-  }
+  };
+
+  if (loading) return <div className="flex h-64 items-center justify-center"><div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" /></div>;
+  if (!train) return <div>Train not found</div>;
+
+  const seatLayout = getSeatLayout();
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <Link
-            to={`/trains?${new URLSearchParams({ source, destination, date }).toString()}`}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-brand-blue"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back to train results
-          </Link>
-          <h1 className="section-title mt-3">{details.train.name}</h1>
-          <p className="section-copy mt-2">
-            {details.segment.source} to {details.segment.destination} on {formatDateLong(date)} •{" "}
-            {formatDuration(details.segment.durationMinutes)}
-          </p>
-        </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+      >
+        <ArrowLeft className="h-5 w-5" />
+        Back to trains
+      </button>
 
-        <div className="glass-card flex items-center gap-3 px-4 py-3">
-          <button
-            type="button"
-            onClick={() => updateQuery({ passengers: clampPassengerCount(passengerCount - 1) })}
-            className="rounded-full border border-slate-200 p-2 text-slate-600"
-          >
-            <Minus className="h-4 w-4" />
-          </button>
-          <div className="text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Passengers</p>
-            <p className="text-lg font-bold text-brand-ink">{passengerCount}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => updateQuery({ passengers: clampPassengerCount(passengerCount + 1) })}
-            className="rounded-full border border-slate-200 p-2 text-slate-600"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
+      <div className="rounded-2xl bg-gradient-to-r from-blue-900 to-blue-800 p-6 text-white shadow-lg">
+        <div className="flex items-center gap-3 mb-2">
+          <Train className="h-6 w-6" />
+          <h1 className="text-2xl font-bold">{train.trainName}</h1>
         </div>
+        <p className="text-blue-200">#{train.trainNumber} • {train.from} → {train.to}</p>
+        <p className="mt-2 text-sm text-blue-200">Journey Date: {date}</p>
       </div>
 
-      <section className="grid gap-4 lg:grid-cols-4">
-        {details.availability.map((coachClass) => (
-          <button
-            key={coachClass.code}
-            type="button"
-            onClick={() => updateQuery({ classCode: coachClass.code })}
-            className={`rounded-[26px] border p-5 text-left transition ${
-              classCode === coachClass.code
-                ? "border-brand-navy bg-brand-navy text-white"
-                : "glass-card"
-            }`}
-          >
-            <p
-              className={`text-xs font-semibold uppercase tracking-[0.2em] ${
-                classCode === coachClass.code ? "text-white/70" : "text-slate-500"
-              }`}
-            >
-              {coachClass.code}
-            </p>
-            <h2 className="mt-2 text-xl font-bold">{coachClass.name}</h2>
-            <p className={`mt-3 text-sm ${classCode === coachClass.code ? "text-white/75" : "text-slate-500"}`}>
-              {coachClass.seatsAvailable} of {coachClass.totalSeats} seats available
-            </p>
-            <p className="mt-4 text-2xl font-bold">{formatCurrency(coachClass.farePerPassenger)}</p>
-          </button>
-        ))}
-      </section>
+      {/* Seat Selection */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Seat Map */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="rounded-2xl bg-white p-6 shadow-md">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">Select Seats - {travelClass.toUpperCase()}</h2>
+            
+            {/* Legend */}
+            <div className="mb-6 flex gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-green-500" />
+                <span>Available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-gray-300" />
+                <span>Booked</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-blue-600" />
+                <span>Selected</span>
+              </div>
+            </div>
 
-      <section className="grid gap-8 xl:grid-cols-[1.35fr_0.65fr]">
-        <div className="glass-card p-5 sm:p-6">
-          <SeatSelection
-            seatMap={details.seatMap}
-            selectedSeats={selectedSeats}
-            maxSelectable={passengerCount}
-            onToggle={handleSeatToggle}
-          />
-        </div>
-
-        <aside className="glass-card h-fit p-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-blue">
-            Booking Snapshot
-          </p>
-          <div className="mt-5 space-y-4 text-sm text-slate-600">
-            <div className="rounded-[24px] bg-brand-mist/60 p-4">
-              <p className="font-semibold text-brand-ink">{details.train.trainNumber}</p>
-              <p className="mt-1 text-xl font-bold text-brand-ink">{details.train.name}</p>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Route</span>
-              <span className="font-semibold text-brand-ink">
-                {details.segment.source} to {details.segment.destination}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Travel date</span>
-              <span className="font-semibold text-brand-ink">{formatDateLong(date)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Class</span>
-              <span className="font-semibold text-brand-ink">{details.selectedClass.name}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Fare / passenger</span>
-              <span className="font-semibold text-brand-ink">
-                {formatCurrency(details.pricing.farePerPassenger)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Estimated total</span>
-              <span className="text-lg font-bold text-brand-navy">
-                {formatCurrency(
-                  details.pricing.farePerPassenger * passengerCount +
-                    details.pricing.pricingBreakdown.convenienceFee +
-                    details.pricing.pricingBreakdown.serviceFee
-                )}
-              </span>
+            {/* Seat Grid */}
+            <div className="space-y-3">
+              {seatLayout.map((row, rowIdx) => (
+                <div key={rowIdx} className="flex justify-center gap-2">
+                  {row.map((seat, seatIdx) => {
+                    const seatId = `${seat.coach}-${seat.number}`;
+                    const isSelected = selectedSeats.find(s => s.id === seatId);
+                    const isAvailable = seat.available;
+                    
+                    return (
+                      <button
+                        key={seatIdx}
+                        disabled={!isAvailable}
+                        onClick={() => toggleSeat(seat.coach, seat.number)}
+                        className={`h-12 w-12 rounded-lg font-medium transition ${
+                          isSelected
+                            ? "bg-blue-600 text-white shadow-lg"
+                            : isAvailable
+                            ? "bg-green-100 text-green-800 hover:bg-green-200"
+                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        }`}
+                      >
+                        {seat.number}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
+        </div>
 
-          <button type="button" onClick={handleContinue} className="primary-button mt-6 w-full gap-2">
-            {isAuthenticated ? "Continue to booking" : "Login to continue"}
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </aside>
-      </section>
+        {/* Booking Summary */}
+        <div className="space-y-4">
+          <div className="rounded-2xl bg-white p-6 shadow-md sticky top-4">
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">Booking Summary</h3>
+            
+            <div className="mb-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Selected Seats</span>
+                <span className="font-medium">{selectedSeats.length}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Price per seat</span>
+                <span className="font-medium">₹{train.price[travelClass]}</span>
+              </div>
+              <div className="border-t pt-2">
+                <div className="flex justify-between text-lg font-bold">
+                  <span>Total</span>
+                  <span className="text-blue-600">₹{train.price[travelClass] * selectedSeats.length}</span>
+                </div>
+              </div>
+            </div>
+
+            {selectedSeats.length > 0 && (
+              <div className="mb-4 space-y-2">
+                <p className="text-sm font-medium text-gray-700">Selected:</p>
+                {selectedSeats.map((seat) => (
+                  <div key={seat.id} className="flex items-center justify-between rounded-lg bg-blue-50 px-3 py-2 text-sm">
+                    <span>Coach {seat.coach} - Seat {seat.seatNumber}</span>
+                    <button
+                      onClick={() => toggleSeat(seat.coach, seat.seatNumber)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              onClick={handleBook}
+              disabled={selectedSeats.length === 0}
+              className="w-full rounded-xl bg-orange-500 py-3 font-semibold text-white shadow-lg transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-gray-300"
+            >
+              {selectedSeats.length > 0 ? `Book ${selectedSeats.length} Seat(s)` : "Select Seats to Book"}
+            </button>
+
+            <p className="mt-3 text-center text-xs text-gray-500">
+              Max 6 seats per booking
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

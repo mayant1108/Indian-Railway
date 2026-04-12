@@ -1,0 +1,314 @@
+{
+  "info": {
+    "name": "Railway Booking API",
+    "description": "Full API endpoints for testing in Postman. Base URL: http://localhost:5000/api\n\nFirst: POST /auth/login with demo user, then use Bearer token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api"
+    },
+    {
+      "key": "auth_token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set(\"auth_token\", pm.response.json().data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": JSON.stringify({
+                "name": "Test User",
+                "email": "test@example.com",
+                "password": "password123",
+                "phone": "1234567890"
+              }, null, 2)
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login (Demo)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set(\"auth_token\", pm.response.json().data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": JSON.stringify({
+                "email": "user@railwayhub.com",
+                "password": "User@123"
+              }, null, 2)
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trains (Public)",
+      "item": [
+        {
+          "name": "Stations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/trains/stations",
+              "host": ["{{base_url}}"],
+              "path": ["trains", "stations"]
+            }
+          }
+        },
+        {
+          "name": "Search Trains",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/trains/search?from=Mumbai&to=Delhi&date=2024-12-25",
+              "host": ["{{base_url}}"],
+              "path": ["trains", "search"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "Mumbai"
+                },
+                {
+                  "key": "to",
+                  "value": "Delhi"
+                },
+                {
+                  "key": "date",
+                  "value": "2024-12-25"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Train Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/trains/64f8b1234567890abcdef123",
+              "host": ["{{base_url}}"],
+              "path": ["trains", "64f8b1234567890abcdef123"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings (Auth Req)",
+      "item": [
+        {
+          "name": "My Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/booking/user",
+              "host": ["{{base_url}}"],
+              "path": ["booking", "user"]
+            }
+          }
+        },
+        {
+          "name": "Create Booking Order (Payment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": JSON.stringify({
+                "trainId": "64f8b1234567890abcdef123",
+                "date": "2024-12-25",
+                "class": "AC",
+                "seats": ["A1", "A2"]
+              }, null, 2)
+            },
+            "url": {
+              "raw": "{{base_url}}/booking/payment-order",
+              "host": ["{{base_url}}"],
+              "path": ["booking", "payment-order"]
+            }
+          }
+        },
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": JSON.stringify({
+                "paymentId": "razorpay_order_id_here",
+                "trainId": "64f8b1234567890abcdef123",
+                "date": "2024-12-25",
+                "class": "AC",
+                "seats": ["A1", "A2"]
+              }, null, 2)
+            },
+            "url": {
+              "raw": "{{base_url}}/booking/create",
+              "host": ["{{base_url}}"],
+              "path": ["booking", "create"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin (Admin Token)",
+      "item": [
+        {
+          "name": "Admin Trains List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/trains",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "trains"]
+            }
+          }
+        },
+        {
+          "name": "Create Train",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"number\": \"12345\",\n  \"name\": \"Test Express\",\n  \"from\": \"Mumbai\",\n  \"to\": \"Delhi\",\n  \"departure\": \"08:00\",\n  \"arrival\": \"18:00\",\n  \"duration\": \"10h\",\n  \"classes\": [{\"type\": \"AC\", \"price\": 1500, \"seats\": 60}]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/trains",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "trains"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

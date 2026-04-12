@@ -1,16 +1,2 @@
-## Railway Booking App Completion Plan
-
-### Steps:
-1. ✅ Gathered project info and confirmed structure matches requirements
-2. ✅ Created backend/.env template
-3. ✅ Completed backend/src/server.js 
-4. ✅ Created frontend/.env 
-5. ✅ Created root README.md 
-6. ⏳ Awaiting MongoDB Atlas URI from user to update backend/.env and seed DB
-7. 🔄 Install deps (in progress)
-8. ✅ Test/deploy ready once DB connected
-
-Progress: Ready for env/setup files. Awaiting MongoDB URI for seeding.
-
-Last updated: After plan approval
+# Railway Booking App - Task Progress\n\n## Current Task: Fix trainController export errors\n\n### Steps to complete (from approved plan):\n- [x] 1. Create TODO.md with steps\n- [x] 2. Rewrite controllers/trainController.js with 4 mock functions using sampleTrains\n- [x] 3. Clean mockData.js (remove sampleTrains comment)\n- [x] 4. Verify no changes needed for data/trains.js and routes/trainRoutes.js\n- [ ] 5. Test routes and attempt completion
 

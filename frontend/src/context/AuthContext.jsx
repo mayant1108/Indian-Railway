@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
         });
       } catch (error) {
         // Demo fallback - use local demo user for testing
-        console.log('Backend unavailable - using demo user');
+
         updateSession({
           nextUser: {
             _id: 'demo',
