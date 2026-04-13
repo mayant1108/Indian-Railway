@@ -135,4 +135,4 @@ export const HomePage = () => {
       </section>
     </div>
   );
-};
+}
