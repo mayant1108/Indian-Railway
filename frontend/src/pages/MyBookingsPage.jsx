@@ -19,9 +19,11 @@ export const MyBookingsPage = () => {
     try {
       const token = localStorage.getItem("token") || "mock-token";
       const response = await axios.get(`${API_URL}/booking/my-bookings`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
-      setBookings(response.data.data);
+      // Backend shape: { success, data: { bookings } }
+      setBookings(response.data?.data?.bookings ?? []);
+
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -65,8 +67,9 @@ export const MyBookingsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
+
         {/* Header Section */}
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

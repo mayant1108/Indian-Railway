@@ -300,3 +300,40 @@ export const getUserBookings = asyncHandler(async (req, res) => {
     },
   });
 });
+
+// Cancel a booking
+export const cancelBooking = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const booking = await Booking.findOne({ _id: id, user: req.user._id });
+
+  if (!booking) {
+    throw new ApiError(404, "Booking not found.");
+  }
+
+  if (booking.status === "cancelled") {
+    return res.json({
+      success: true,
+      message: "Booking already cancelled.",
+      data: {
+        booking: serializeBooking(booking),
+      },
+    });
+  }
+
+  // NOTE: Seat re-allocation is intentionally not re-implemented here
+  // because the app uses an allocation-key approach at quote-time.
+  // We still mark the booking as cancelled, which removes it from the
+  // confirmed bookings used for seat availability calculation.
+  booking.status = "cancelled";
+  await booking.save();
+
+  res.json({
+    success: true,
+    message: "Booking cancelled successfully.",
+    data: {
+      booking: serializeBooking(booking),
+    },
+  });
+});
+
